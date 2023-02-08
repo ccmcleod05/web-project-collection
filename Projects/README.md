@@ -1,2 +1,2 @@
-Blog (In Progress)
-Math Game (February 4th 2023)
+* Blog (In Progress)
+* Math Game (February 4th 2023)
