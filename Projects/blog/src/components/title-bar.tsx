@@ -1,4 +1,6 @@
-function TitleBar() {
+import styles from '@/styles/Home.module.css'
+
+function TitleBar () {
     return (
         <div>
         </div>
