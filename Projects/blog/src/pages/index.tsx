@@ -1,17 +1,14 @@
 import Head from 'next/head'
+import { GetStaticProps, InferGetStaticPropsType } from 'next';
 // import { Inter } from '@next/font/google'
-import { GetServerSideProps } from 'next'
 import BlogCard, { blogCardProps } from './../components/blog-card'
 import BlogCardLayout from './../layouts/blog-card-layout'
 import TitleBar from './../components/title-bar'
 
 import styles from '@/styles/Home.module.css'
 
-// const inter = Inter({ subsets: ['latin'] })
+function Home({ blogCardDataSet }: InferGetStaticPropsType<typeof getStaticProps>) {
 
-let blogPosts: blogCardProps[] = [];
-
-export default function Home() {
   return (
     <>
       <Head>
@@ -21,17 +18,18 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" /> {/* Change Favicon */}
       </Head>
       <main className={styles.main}>
+        <div>Yo</div>
         <TitleBar/>
         <BlogCardLayout>
-          {blogPosts.map((childInfo: blogCardProps, index: number) => {
+          {blogCardDataSet.map((blogCardData: blogCardProps, index: number) => {
             return (
               <BlogCard 
-                key={`${childInfo.author}-${index}`} 
-                imageSrc={childInfo.imageSrc} 
-                imageAlt={childInfo.imageAlt} 
-                title={childInfo.briefDescription} 
-                briefDescription={childInfo.briefDescription} 
-                author={childInfo.author}
+                key={`${blogCardData.author}-${index}`} 
+                imageSrc={blogCardData.imageSrc} 
+                imageAlt={blogCardData.imageAlt} 
+                title={blogCardData.briefDescription} 
+                briefDescription={blogCardData.briefDescription} 
+                author={blogCardData.author}
               />
             )
           })}
@@ -41,10 +39,23 @@ export default function Home() {
   )
 }
 
+export const getStaticProps: GetStaticProps<{ blogCardDataSet: blogCardProps[] }> = async () => {
+  // const url: string = process.env.REACT_APP_URL ? process.env.REACT_APP_URL : '';
+  const url: string = 'https://blog-project-4b9e4-default-rtdb.firebaseio.com/';
+  let res: Response = await fetch(url);
+  let blogCardDataSet: blogCardProps[] = await res.json();
 
-{/*make get server side props for blog posts and serve to BlogCardLayout to map as children*/}
-/*
-function GetServerSideProps () {
+  if (!blogCardDataSet) {
+    return {
+      notFound: true,
+    }
+  }
 
+  return {
+    props: {
+      blogCardDataSet,
+    },
+  }
 }
-*/
+
+export default Home;
