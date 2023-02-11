@@ -1,45 +1,24 @@
-import { useEffect, useState } from 'react';
 import { MDXProvider } from '@mdx-js/react';
-import Post from './../blogs/camden-mcleod-1.mdx';
-
-type blogPageProps = {
-    
-    blogLoc: string;
-
-}
+import Link from 'next/link';
+import { useRouter } from 'next/router';
 
 function BlogPage () {
-
-    /*
-    const [blogPost, setBlogPost] = useState();
-
-    useEffect(() => {
-
-    })
-
-    const getBlog = async () => {
-        return (
-            <>
-            </>
-        );
-    }
-
-    const handleClick = () => {
-        // route to go back to main page
-    }
-    */
+    const router = useRouter();
+    const { content } = router.query;
 
     return (
-        <>
-            <MDXProvider>
-                <Post/>
-            </MDXProvider>
-            {/*
-            <button onClick={handleClick}>
-                Back
-            </button>
-            */}
-        </>
+        <div className={'column'}>
+            <div>
+                <Link href={'/'}>
+                    Back
+                </Link>
+            </div>
+            <div>
+                <MDXProvider>
+                    {content}
+                </MDXProvider>
+            </div>
+        </div>
     );
 }
 

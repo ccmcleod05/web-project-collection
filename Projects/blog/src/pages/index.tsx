@@ -1,9 +1,10 @@
-import Head from 'next/head'
+import Head from 'next/head';
 import { GetStaticProps, InferGetStaticPropsType } from 'next';
-// import { Inter } from '@next/font/google'
-import BlogCard, { blogCardProps } from './../components/blog-card'
-import BlogCardLayout from './../layouts/blog-card-layout'
-import TitleBar from './../components/title-bar'
+// import { Inter } from '@next/font/google';
+import BlogCard, { blogCardProps } from './../components/blog-card';
+import BlogCardLayout from './../layouts/blog-card-layout';
+import TitleBar from './../components/title-bar';
+import fs from 'fs';
 
 import styles from '@/styles/Home.module.css'
 
@@ -18,7 +19,6 @@ function Home({ blogCardDataSet }: InferGetStaticPropsType<typeof getStaticProps
         <link rel="icon" href="/favicon.ico" /> {/* Change Favicon */}
       </Head>
       <main className={styles.main}>
-        <div>Yo</div>
         <TitleBar/>
         <BlogCardLayout>
           {blogCardDataSet.map((blogCardData: blogCardProps, index: number) => {
@@ -27,9 +27,10 @@ function Home({ blogCardDataSet }: InferGetStaticPropsType<typeof getStaticProps
                 key={`${blogCardData.author}-${index}`} 
                 imageSrc={blogCardData.imageSrc} 
                 imageAlt={blogCardData.imageAlt} 
-                title={blogCardData.briefDescription} 
+                title={blogCardData.title} 
                 briefDescription={blogCardData.briefDescription} 
                 author={blogCardData.author}
+                content={blogCardData.content}
               />
             )
           })}
@@ -39,22 +40,64 @@ function Home({ blogCardDataSet }: InferGetStaticPropsType<typeof getStaticProps
   )
 }
 
-export const getStaticProps: GetStaticProps<{ blogCardDataSet: blogCardProps[] }> = async () => {
-  // const url: string = process.env.REACT_APP_URL ? process.env.REACT_APP_URL : '';
-  const url: string = 'https://blog-project-4b9e4-default-rtdb.firebaseio.com/';
-  let res: Response = await fetch(url);
-  let blogCardDataSet: blogCardProps[] = await res.json();
+async function getAccessToken () {
+  var {google} = require("googleapis");
+  var serviceAccount = require("firebase.json");
 
-  if (!blogCardDataSet) {
-    return {
-      notFound: true,
-    }
+  var scopes = [
+    "https://www.googleapis.com/auth/userinfo.email",
+    "https://www.googleapis.com/auth/firebase.database"
+  ];
+
+  var jwtClient = new google.auth.JWT(
+    serviceAccount.client_email,
+    null,
+    serviceAccount.private_key,
+    scopes
+  );
+
+  return new Promise((resolve, reject) =>
+    jwtClient.authorize((error: any, tokens: any) => {
+      if (error)
+        reject(error)
+      else
+        resolve(tokens.access_token)
+    })
+  )
+}
+
+export const getStaticProps: GetStaticProps<{ blogCardDataSet: blogCardProps[] }> = async () => {
+  let blogCardDataSet: blogCardProps[] = [];
+
+  const accessToken = await getAccessToken();
+
+  const url = `https://blog-project-4b9e4-default-rtdb.firebaseio.com/blogs.json`;
+  const res: Response = await fetch(url, {
+    headers: {
+      'Authorization': `Bearer ${accessToken}`
+    },
+  });
+  const jsonData = await res.json();
+
+  for (let blogName in jsonData){
+    var blogDataPush: any = {};
+      for (let blogData in jsonData[blogName]){
+        if (blogData === 'path') {
+          var path = jsonData[blogName][blogData]
+          var content = fs.readFileSync(path, 'utf8');
+          blogDataPush['content'] = content;
+        }
+        else {
+          blogDataPush[blogData] = jsonData[blogName][blogData];
+        }
+      }
+    blogCardDataSet.push(blogDataPush);
   }
 
   return {
-    props: {
-      blogCardDataSet,
-    },
+    props: { 
+      blogCardDataSet
+    }
   }
 }
 
